@@ -77,16 +77,12 @@ def df_from_erddap(name, url, variables, start_time, end_time):
             df = pd.read_csv(f, skiprows=0, names=header)
         os.remove(__temp_csv)
         df = df.rename(columns={"time": "timestamp"})
-        for var in df.columns:
-            if var.endswith("_qc"):
-                df[var] = df[var].replace(np.nan, -1)
-                df[var] = df[var].astype(np.int8)  # set to integer
-                df[var] = df[var].replace(-1, np.nan)
+
         df["timestamp"] = pd.to_datetime(df["timestamp"], format="%Y-%m-%dT%H:%M:%SZ", utc=True)
         df = df.set_index("timestamp")
         return df
     else:
-        rich.print(f"[yellow]NO DATA FOR {url}")
+        rich.print(f"[yellow]NO DATA FOR {name} between {start_time} and {end_time}")
         return pd.DataFrame(columns=variables)
 
 
@@ -189,9 +185,25 @@ def generate_csv(start_time, end_time, file):
         columns.append(f"ZCUR_{i}m_qc")
 
     df = df_final[columns]
-    print(f"Storing csv file to \"{file}\"")
+    df = erase_data_with_bad_qc(df)
+    rich.print(f"[green]Storing csv file to \"{file}\"")
     df.to_csv(file)
     rich.print("[green]done!")
+
+
+def erase_data_with_bad_qc(df):
+    df = df.copy()
+    for var in df.columns:
+        if var.endswith("_qc"):
+            continue
+        var_qc = var + "_qc"
+
+        for index, row in df.loc[df[var_qc] == 4].iterrows():
+            df.at[index, var] = np.nan
+            df.at[index, var_qc] = np.nan
+
+        del df[var_qc]  # erase qc variable
+    return df
 
 
 if __name__ == "__main__":
