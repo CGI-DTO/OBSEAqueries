@@ -37,11 +37,18 @@ def merge_dataframes(dataframes: list):
     """
     print(dataframes[0])
     print(dataframes[1])
+
+    if dataframes[0].empty and dataframes[1].empty:  # if both are empty
+        return dataframes[0]  # return one of them
+    if dataframes[0].empty and not dataframes[1].empty:  # if df0 is empty but df1 not
+        return dataframes[1]
+    elif dataframes[1].empty and not dataframes[0].empty:  # if df1 is empty but df0 not
+        return dataframes[0]
+
     df = pd.concat(dataframes)
     df = df.sort_index()
     rich.print("[yellow]Merged dataframes:")
     print(df)
-    #input()
     return df
 
 
@@ -96,6 +103,8 @@ def get_erddap_metadata(url):
 
 
 def upsample_1h_to_30min(df):
+    if df.empty:
+        return df
     waves = df.resample("1h").max()
     waves2 = waves
     waves2["timestamp"] = waves2.index + pd.to_timedelta("30min")
@@ -169,15 +178,15 @@ def generate_csv(start_time, end_time, file):
     columns = []
     for c in initial_cols:  # add QC for every column in the list
         columns.append(c)
-        #columns.append(c + "_qc")
+        columns.append(c + "_qc")
 
     for i in range(0, 20):  # Add currents columns for every depth from 0 to 19 meters
         columns.append(f"UCUR_{i}m")
-        #columns.append(f"UCUR_{i}m_qc")
+        columns.append(f"UCUR_{i}m_qc")
         columns.append(f"VCUR_{i}m")
-        #columns.append(f"VCUR_{i}m_qc")
+        columns.append(f"VCUR_{i}m_qc")
         columns.append(f"ZCUR_{i}m")
-        #columns.append(f"ZCUR_{i}m_qc")
+        columns.append(f"ZCUR_{i}m_qc")
 
     df = df_final[columns]
     print(f"Storing csv file to \"{file}\"")
@@ -186,12 +195,6 @@ def generate_csv(start_time, end_time, file):
 
 
 if __name__ == "__main__":
-    argparser = ArgumentParser()
-    argparser.add_argument("start_time", type=str, help="start time in ISO format (e.g. 2020-01-01T00:00:00Z) ")
-    argparser.add_argument("end_time", type=str, help="start time in ISO format (e.g. 2020-01-01T00:00:00Z) ")
-    argparser.add_argument("-f", "--file", help="Another argument", type=str, required=False, default="data.csv")
-    args = argparser.parse_args()
-    #generate_csv(args.start_time, args.end_time, args.file)
 
     # Generate 6 month data files
     # TODO: work on compression of these files
