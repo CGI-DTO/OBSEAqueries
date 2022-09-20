@@ -7,6 +7,8 @@ institution: Universitat Politècnica de Catalunya (UPC)
 email: enoc.martinez@upc.edu
 license: MIT
 created: 19/09/22
+
+Modified by Gerard Llorach
 """
 
 from argparse import ArgumentParser
@@ -39,7 +41,7 @@ def merge_dataframes(dataframes: list):
     df = df.sort_index()
     rich.print("[yellow]Merged dataframes:")
     print(df)
-    input()
+    #input()
     return df
 
 
@@ -157,22 +159,25 @@ def generate_csv(start_time, end_time, file):
             for c in df.columns:
                 df_final[c] = np.nan
         else:
-            df_final = df_final.merge(df, on="timestamp", how="outer")
+            try: # TODO: error for CTD for latest 6 months of 2020
+                df_final = df_final.merge(df, on="timestamp", how="outer")
+            except:
+                rich.print("****** Error, could not merge data. ******")
 
     # ---- Generate custom CSV file from a list of variables ---- #
     initial_cols = ["TEMP", "PSAL", "AIRT", "Hm0", "H3", "H10", "Hmax", "Spr1", "Mdir", "WDIR", "WSPD"]
     columns = []
     for c in initial_cols:  # add QC for every column in the list
         columns.append(c)
-        columns.append(c + "_qc")
+        #columns.append(c + "_qc")
 
     for i in range(0, 20):  # Add currents columns for every depth from 0 to 19 meters
         columns.append(f"UCUR_{i}m")
-        columns.append(f"UCUR_{i}m_qc")
+        #columns.append(f"UCUR_{i}m_qc")
         columns.append(f"VCUR_{i}m")
-        columns.append(f"VCUR_{i}m_qc")
+        #columns.append(f"VCUR_{i}m_qc")
         columns.append(f"ZCUR_{i}m")
-        columns.append(f"ZCUR_{i}m_qc")
+        #columns.append(f"ZCUR_{i}m_qc")
 
     df = df_final[columns]
     print(f"Storing csv file to \"{file}\"")
@@ -186,4 +191,18 @@ if __name__ == "__main__":
     argparser.add_argument("end_time", type=str, help="start time in ISO format (e.g. 2020-01-01T00:00:00Z) ")
     argparser.add_argument("-f", "--file", help="Another argument", type=str, required=False, default="data.csv")
     args = argparser.parse_args()
-    generate_csv(args.start_time, args.end_time, args.file)
+    #generate_csv(args.start_time, args.end_time, args.file)
+
+    # Generate 6 month data files
+    # TODO: work on compression of these files
+    for year in range (2011, 2022):
+        # First six months
+        sTime = str(year) + "-01-01T00:00:00Z"
+        eTime = str(year) + "-07-01T00:00:00Z"
+        fileName = "obsea_" + str(year) + "_1.csv"
+        generate_csv(sTime, eTime, fileName)
+        # Latest six months
+        sTime = eTime
+        eTime = str(year + 1) + "-01-01T00:00:00Z"
+        fileName = "obsea_" + str(year) + "_2.csv"
+        generate_csv(sTime, eTime, fileName)
