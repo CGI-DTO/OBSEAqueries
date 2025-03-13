@@ -11,4 +11,6 @@ pip install -r requirements.txt
 python3 extract_data_from_erddap.py <start time> <end time> [-f <nom del fixter>]
 
 python3 extract_data_from_erddap.py 2020-01-01T00:00:00Z 2021-01-01T00:00:00Z -f obsea_2020.csv
+
+python extract_data_from_erddap.py 2020-01-01T00:00:00Z 2021-01-01T00:00:00Z -f obsea_2020.csv
 ```
