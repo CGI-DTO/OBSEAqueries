@@ -21,11 +21,15 @@ import numpy as np
 
 
 __dataset_urls = {
-    "SBE37": "https://data.obsea.es/erddap/tabledap/OBSEA_SBE37_CTD_30min",
-    "SBE16": "https://data.obsea.es/erddap/tabledap/OBSEA_SBE16_CTD_30min",
-    "awac-waves": "https://data.obsea.es/erddap/tabledap/OBSEA_AWAC_waves",
+    #"SBE37": "https://data.obsea.es/erddap/tabledap/OBSEA_SBE37_CTD_30min",
+    #"SBE16": "https://data.obsea.es/erddap/tabledap/OBSEA_SBE16_CTD_30min",
+    #"awac-waves": "https://data.obsea.es/erddap/tabledap/OBSEA_AWAC_waves",
+    #"awac-currents": "https://data.obsea.es/erddap/tabledap/OBSEA_AWAC_currents_30min",
+    #"Airmar_150WX": "https://data.obsea.es/erddap/tabledap/OBSEA_Buoy_Airmar_150WX_Meteo_30min"
+    "CTD": "https://data.obsea.es/erddap/tabledap/OBSEA_CTD_30min",
+    "awac-waves": "https://data.obsea.es/erddap/tabledap/OBSEA_AWAC_waves_full",
     "awac-currents": "https://data.obsea.es/erddap/tabledap/OBSEA_AWAC_currents_30min",
-    "Airmar_150WX": "https://data.obsea.es/erddap/tabledap/OBSEA_Buoy_Airmar_150WX_Meteo_30min"
+    "Airmar_150WX": "https://data.obsea.es/erddap/tabledap/OBSEA_Buoy_Airmar_150WX_30min"
 }
 
 
@@ -113,7 +117,7 @@ def upsample_1h_to_30min(df):
 
 
 __custom_operations = [
-    {"source": ["SBE37", "SBE16"], "operation": merge_dataframes, "destination": "CTD"},
+    #{"source": ["SBE37", "SBE16"], "operation": merge_dataframes, "destination": "CTD"},
     {"source": "awac-waves", "operation": upsample_1h_to_30min, "destination": "awac-waves"}
 ]
 
