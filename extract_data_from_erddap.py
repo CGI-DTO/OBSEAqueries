@@ -174,19 +174,40 @@ def generate_csv(start_time, end_time, file):
                 rich.print("****** Error, could not merge data. ******")
 
     # ---- Generate custom CSV file from a list of variables ---- #
-    initial_cols = ["TEMP", "PSAL", "AIRT", "Hm0", "H3", "H10", "Hmax", "Spr1", "Mdir", "WDIR", "WSPD"]
+    # Variables from awac waves
+    awac_waves = ["VHM0", "VAVH", "VH110", "VZMX", "VTM02", "VTPK", "VTZA", "VPED", "VMDR"]
+
+    # Variables from CTD
+    ctd = ["TEMP", "PSAL"]
+    
+    # Variables from Airmar_150WX
+    airmar = ['CAPH', 'AIRT', 'WDIR', 'WSPD']
+
+    # Variables from Airmar (e.g., meteorological data)
+    awac_currents = ["CSPD","UCUR", "VCUR", "ZCUR"]
+
+    # Merge all variables into a single list
+    initial_cols = awac_waves + ctd + airmar + awac_currents
     columns = []
+    
+    # Create qc
     for c in initial_cols:  # add QC for every column in the list
         columns.append(c)
-        columns.append(c + "_qc")
+        columns.append(c + "_QC")
 
-    for i in range(0, 20):  # Add currents columns for every depth from 0 to 19 meters
-        columns.append(f"UCUR_{i}m")
-        columns.append(f"UCUR_{i}m_qc")
-        columns.append(f"VCUR_{i}m")
-        columns.append(f"VCUR_{i}m_qc")
-        columns.append(f"ZCUR_{i}m")
-        columns.append(f"ZCUR_{i}m_qc")
+    # Create variables for depth values
+    # for i in range(0, 20):  # Add currents columns for every depth from 0 to 19 meters
+    #     columns.append(f"UCUR_{i}m")
+    #     columns.append(f"UCUR_{i}m_QC")
+    #     columns.append(f"VCUR_{i}m")
+    #     columns.append(f"VCUR_{i}m_QC")
+    #     columns.append(f"ZCUR_{i}m")
+    #     columns.append(f"ZCUR_{i}m_QC")
+
+    missing_columns = [col for col in columns if col not in df_final.columns]
+
+    if missing_columns:
+        print(f"The following columns are missing in df_final: {missing_columns}")
 
     df = df_final[columns]
     df = erase_data_with_bad_qc(df)
@@ -198,9 +219,9 @@ def generate_csv(start_time, end_time, file):
 def erase_data_with_bad_qc(df):
     df = df.copy()
     for var in df.columns:
-        if var.endswith("_qc"):
+        if var.endswith("_QC"):
             continue
-        var_qc = var + "_qc"
+        var_qc = var + "_QC"
 
         for index, row in df.loc[df[var_qc] == 4].iterrows():
             df.at[index, var] = np.nan
