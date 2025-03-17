@@ -168,6 +168,11 @@ def generate_csv(start_time, end_time, file):
             for c in df.columns:
                 df_final[c] = np.nan
         else:
+            # Drop unnecessary columns
+            columns_to_drop = ["latitude", "longitude", "depth", "latitude_QC", "longitude_QC", "depth_QC"]
+            df = df.drop(columns=[col for col in columns_to_drop if col in df.columns], errors="ignore")
+            
+            
             try: # TODO: error for CTD for latest 6 months of 2020
                 df_final = df_final.merge(df, on="timestamp", how="outer")
             except:
@@ -235,7 +240,7 @@ if __name__ == "__main__":
 
     # Generate 6 month data files
     # TODO: work on compression of these files
-    for year in range (2011, 2022):
+    for year in range (2018, 2022):
         # First six months
         sTime = str(year) + "-01-01T00:00:00Z"
         eTime = str(year) + "-07-01T00:00:00Z"

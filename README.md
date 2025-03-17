@@ -1,5 +1,7 @@
 # OBSEAqueries
 Python queries to download data
+https://data.obsea.es/erddap/info/index.html?page=1&itemsPerPage=1000
+
 
 ```bash
 python3 --version
