@@ -168,6 +168,40 @@ def generate_csv(start_time, end_time, file):
             for c in df.columns:
                 df_final[c] = np.nan
         else:
+            # Handle depth-based variables
+            if "depth" in df.columns and df.groupby(df.index)["depth"].nunique().max() > 1:
+                unique_depths = df["depth"].unique()  # Get unique depth values
+                for depth in unique_depths:
+                    depth_df = df[df["depth"] == depth]  # Filter rows for this depth
+
+                    # Group by index (timestamps) and calculate the mean
+                    def safe_mean(group):
+                        non_nan_values = group.dropna()  # Exclude NaN values
+                        unique_values = non_nan_values.nunique()  # Count unique non-NaN values
+                        if unique_values > 1:
+                            rich.print(
+                                f"[yellow]Warning: Multiple unique values found for depth {depth} at timestamp {group.name}. "
+                                f"Values: {non_nan_values.tolist()}"
+                                # There is an error, for some reason there are no unique values. Check if it works here:
+                                # https://data.obsea.es/erddap/tabledap/OBSEA_AWAC_currents_30min.htmlTable?time%2Clatitude%2Clongitude%2Cdepth%2CCSPD%2CCDIR%2CUCUR%2CVCUR%2CZCUR%2CCSPD_QC%2CCDIR_QC%2CUCUR_QC%2CVCUR_QC%2CZCUR_QC%2Clatitude_QC%2Clongitude_QC&time%3E=2018-04-04T19%3A00%3A00Z&time%3C=2018-04-04T19%3A00%3A00Z&depth=0&depth=0
+                            )
+                        return group.mean()  # Calculate the mean
+
+                    depth_df = depth_df.groupby(depth_df.index).agg(safe_mean)
+
+                    for var in ["UCUR", "VCUR", "ZCUR"]:  # Variables to process
+                        if var in df.columns:
+                            new_col_name = f"{var}_{int(depth)}m"  # Encode depth in column name
+                            # Reindex to align with df_final and fill missing timestamps with NaN
+                            aligned_data = depth_df[var].reindex(df_final.index, fill_value=np.nan)
+                            df_final[new_col_name] = aligned_data
+
+            
+            
+            
+            
+            
+            
             # Drop unnecessary columns
             columns_to_drop = ["latitude", "longitude", "depth", "latitude_QC", "longitude_QC", "depth_QC"]
             df = df.drop(columns=[col for col in columns_to_drop if col in df.columns], errors="ignore")
@@ -240,7 +274,7 @@ if __name__ == "__main__":
 
     # Generate 6 month data files
     # TODO: work on compression of these files
-    for year in range (2018, 2022):
+    for year in range (2018, 2019):
         # First six months
         sTime = str(year) + "-01-01T00:00:00Z"
         eTime = str(year) + "-07-01T00:00:00Z"
